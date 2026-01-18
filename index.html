@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Find IT • Prompt Game</title>
+
+  <style>
+    :root {
+      --find:#0f2a44;
+      --live:#1f4d3a;
+      --share:#7a5c1e;
+      --card:#ffffff;
+      --text:#111;
+      --muted:#555;
+    }
+
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--find);
+      padding: 24px;
+    }
+
+    .card{
+      width:min(740px,100%);
+      background:var(--card);
+      color:var(--text);
+      border-radius:18px;
+      padding:24px;
+      box-shadow:0 12px 30px rgba(0,0,0,.25);
+    }
+
+    h1{ margin:0 0 6px; font-size:22px; }
+    .sub{ margin:0 0 14px; color:var(--muted); font-size:14px; }
+
+    .rowline{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+    .label{ font-size:12px; color:var(--muted); font-weight:700; letter-spacing:.6px; }
+
+    .categories, .timers{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+
+    .pill{
+      cursor:pointer; border:0; border-radius:999px;
+      padding:8px 14px; font-size:14px; font-weight:600;
+      background:#eef1f6; color:#111;
+    }
+
+    .pill.active{ color:#fff; }
+
+    .find.active{ background:var(--find); }
+    .live.active{ background:var(--live); }
+    .share.active{ background:var(--share); }
+    .timer.active{ background:#111; }
+
+    .timerDisplay{
+      margin-left:auto;
+      font-size:14px;
+      font-weight:800;
+      color:#111;
+      background:#f6f7f9;
+      padding:8px 12px;
+      border-radius:12px;
+      min-width:86px;
+      text-align:center;
+    }
+
+    .prompt{
+      font-size:22px; line-height:1.35;
+      margin:16px 0 22px;
+      padding:16px;
+      border-radius:12px;
+      background:#f6f7f9;
+      border-left:6px solid var(--find);
+    }
+
+    .actions{ display:flex; gap:12px; flex-wrap:wrap; }
+
+    .action{
+      cursor:pointer; border:0; border-radius:14px;
+      padding:12px 16px; font-size:15px; font-weight:700;
+    }
+
+    .primary{ background:#111; color:#fff; }
+    .ghost{ background:#eef1f6; color:#111; }
+
+    .tiny{ font-size:12px; color:var(--muted); margin-top:14px; }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <h1>Find IT • Prompt Game</h1>
+    <p class="sub">Pick a category. Click for a prompt. Optional timer if you want chaos.</p>
+
+    <!-- Categories -->
+    <div class="rowline">
+      <span class="label">CATEGORY</span>
+      <div class="categories">
+        <button class="pill find active" data-cat="find">Find IT</button>
+        <button class="pill live" data-cat="live">Live IT</button>
+        <button class="pill share" data-cat="share">Share IT</button>
+      </div>
+    </div>
+
+    <!-- Timers -->
+    <div class="rowline">
+      <span class="label">TIMER</span>
+      <div class="timers">
+        <button class="pill timer active" data-seconds="0">Off</button>
+        <button class="pill timer" data-seconds="30">30s</button>
+        <button class="pill timer" data-seconds="60">60s</button>
+      </div>
+      <div class="timerDisplay" id="timerDisplay">—</div>
+    </div>
+
+    <div class="prompt" id="prompt">
+      Click “New Prompt” to start.
+    </div>
+
+    <div class="actions">
+      <button class="action primary" id="newBtn">New Prompt</button>
+      <button class="action ghost" id="copyBtn">Copy</button>
+      <button class="action ghost" id="saveBtn">Save</button>
+    </div>
+
+    <p class="tiny" id="status"></p>
+  </main>
+
+  <script>
+    const data = {
+      find: [
+        "What’s something you believe but have never really questioned?",
+        "If doubt wasn’t a problem, what would you ask about faith?",
+        "What belief feels unclear right now?",
+        "What does faith mean to you when no one is watching?",
+        "What question do you avoid asking because it feels risky?",
+        "What are you afraid you’ll discover if you question what you’ve always believed?",
+        "If you could be completely honest about faith, what would you say out loud?",
+        "What part of faith feels most confusing right now—and why that part?",
+        "Where do you feel pressure to believe “correctly” instead of honestly?",
+        "What’s one thing you wish someone would explain without making you feel dumb?",
+        "When have you felt close to God (or meaning) even if you didn’t have words for it?",
+        "What belief do you want to keep… and what belief do you want to re-check?",
+        "If faith is a journey, what part of the map are you on today?",
+        "What’s a question you’ve never asked because you were worried about the reaction?",
+        "What would faith look like if it was safe to be unsure?"
+      ],
+      live: [
+        "What choice feels harder when your values are involved?",
+        "When it’s easier to stay silent, what usually stops you from acting?",
+        "What habit shapes you more than you want to admit?",
+        "What would it look like to live your beliefs this week?",
+        "Where do your actions and beliefs clash?",
+        "What’s one small decision this week that could align your life with your values?",
+        "Where are you tempted to perform goodness instead of practice it privately?",
+        "What’s the hardest place to stay kind—and what would ‘try’ look like there?",
+        "When you’re stressed, what do you usually do… and what do you wish you did?",
+        "What’s one boundary you need that would make you a better version of you?",
+        "Who is someone you could show up for this week in a simple, real way?",
+        "What’s one habit you could replace with something healthier—starting today?",
+        "When you mess up, do you hide, excuse, or learn—what would growth look like?",
+        "What’s one way to practice courage that doesn’t require being loud?",
+        "Where do you need to pause before reacting—and what could that change?"
+
+      ],
+      share: [
+        "When does faith come up naturally in conversation?",
+        "What part of your story feels hard to explain?",
+        "How do you react when someone disagrees with your beliefs?",
+        "What makes a faith conversation feel safe?",
+        "When does sharing feel like pressure instead of honesty?",
+        "What’s a respectful way to say what you believe without starting a debate?",
+        "When someone asks what you believe, do you freeze, perform, or stay honest?",
+        "What’s a time you wish you’d spoken up—and what stopped you?",
+        "How do you respond when someone says something negative about faith?",
+        "What would it look like to share your story without oversharing?",
+        "What makes you feel safe in conversations—and how can you offer that to others?",
+        "When does talking about faith feel natural for you (if it ever does)?",
+        "What’s one question you could ask that opens a real conversation?",
+        "How do you stay kind when someone is trying to provoke you?",
+        "What’s a way to live your beliefs that people would notice without you announcing it?"
+      ]
+    };
+
+    let currentCat = "find";
+    let timerSeconds = 0;      // 0 = off
+    let remaining = 0;
+    let intervalId = null;
+
+    const promptEl = document.getElementById("prompt");
+    const statusEl = document.getElementById("status");
+    const timerDisplay = document.getElementById("timerDisplay");
+
+    const catBtns = document.querySelectorAll("[data-cat]");
+    const timerBtns = document.querySelectorAll("[data-seconds]");
+
+    function cssVar(name){
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function clearTimer(){
+      if(intervalId) clearInterval(intervalId);
+      intervalId = null;
+      remaining = 0;
+      timerDisplay.textContent = timerSeconds ? `${timerSeconds}s` : "—";
+    }
+
+    function startTimer(){
+      clearTimer();
+      if(timerSeconds === 0) return;
+
+      remaining = timerSeconds;
+      timerDisplay.textContent = `${remaining}s`;
+
+      intervalId = setInterval(() => {
+        remaining -= 1;
+        timerDisplay.textContent = `${remaining}s`;
+
+        if(remaining <= 0){
+          clearInterval(intervalId);
+          intervalId = null;
+          timerDisplay.textContent = "Time!";
+          statusEl.textContent = "Time’s up — pick a choice or explain your answer.";
+        }
+      }, 1000);
+    }
+
+    function setCategory(cat){
+      currentCat = cat;
+
+      const bg = cssVar(`--${cat}`);
+      document.body.style.background = bg;
+      document.querySelector(".prompt").style.borderLeftColor = bg;
+
+      catBtns.forEach(btn => btn.classList.toggle("active", btn.dataset.cat === cat));
+
+      statusEl.textContent = "";
+      promptEl.textContent = "Click “New Prompt” to start.";
+      clearTimer();
+    }
+
+    function setTimer(seconds){
+      timerSeconds = Number(seconds);
+      timerBtns.forEach(btn => btn.classList.toggle("active", Number(btn.dataset.seconds) === timerSeconds));
+      statusEl.textContent = "";
+      clearTimer();
+    }
+
+    function newPrompt(){
+      const arr = data[currentCat];
+      const p = arr[Math.floor(Math.random() * arr.length)];
+      promptEl.textContent = p;
+      statusEl.textContent = "";
+      startTimer();
+    }
+
+    async function copyPrompt(){
+      try{
+        await navigator.clipboard.writeText(promptEl.textContent);
+        statusEl.textContent = "Copied.";
+      }catch{
+        statusEl.textContent = "Copy failed.";
+      }
+    }
+
+    function savePrompt(){
+      statusEl.textContent = "Saved (local only).";
+    }
+
+    catBtns.forEach(btn => btn.addEventListener("click", () => setCategory(btn.dataset.cat)));
+    timerBtns.forEach(btn => btn.addEventListener("click", () => setTimer(btn.dataset.seconds)));
+
+    document.getElementById("newBtn").onclick = newPrompt;
+    document.getElementById("copyBtn").onclick = copyPrompt;
+    document.getElementById("saveBtn").onclick = savePrompt;
+
+    // initialize display
+    clearTimer();
+  </script>
+</body>
+</html>
